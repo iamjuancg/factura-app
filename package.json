@@ -2,7 +2,7 @@
   "name": "factura-app",
   "version": "1.0.0",
   "private": true,
-  "homepage": "https://TU_USUARIO.github.io/factura-app",
+  "homepage": "https://iamjuancg.github.io/factura-app",
   "dependencies": {
     "jspdf": "^2.5.1",
     "jspdf-autotable": "^3.8.2",
