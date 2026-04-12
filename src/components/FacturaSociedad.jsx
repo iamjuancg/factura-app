@@ -131,7 +131,7 @@ export default function FacturaSociedad() {
             </div>
           );
         })}
-        <button style={S.addBtn} onClick={addLinea}>+ AÃ±adir linea</button>
+        <button style={S.addBtn} onClick={addLinea}>+ Añadir linea</button>
       </div>
 
       <div style={S.card}>

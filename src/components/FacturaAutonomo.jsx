@@ -130,7 +130,7 @@ export default function FacturaAutonomo() {
             <button style={S.delBtn} onClick={() => removeLinea(l.id)}>x</button>
           </div>
         ))}
-        <button style={S.addBtn} onClick={addLinea}>+ AÃ±adir linea</button>
+        <button style={S.addBtn} onClick={addLinea}>+ Añadir linea</button>
       </div>
 
       <div style={S.card}>
