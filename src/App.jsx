@@ -82,8 +82,7 @@ export default function App() {
   return (
     <PersonasProvider>
       <div style={{ minHeight: "100vh", background: "#f0f4f9", display: "flex", flexDirection: "column" }}>
-        
-        {/* Header */}
+
         <header style={{ background: "#0f2b5b", height: 52, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 24px", position: "sticky", top: 0, zIndex: 20 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <div style={{ width: 30, height: 30, background: "rgba(91,180,245,0.18)", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -104,8 +103,7 @@ export default function App() {
 
         <div style={{ display: "flex", flex: 1 }}>
 
-          {/* Sidebar */}
-          <aside style={{ width: 210, background: "#0f2b5b", padding: "16px 10px", display: "flex", flexDirection: "column", gap: 2, position: "sticky", top: 52, height: "calc(100vh - 52px)" }}>
+          <aside style={{ width: 210, minWidth: 210, background: "#0f2b5b", padding: "16px 10px", display: "flex", flexDirection: "column", gap: 2, position: "sticky", top: 52, height: "calc(100vh - 52px)" }}>
             {NAV.map((item, i) => (
               <div key={item.id}>
                 {item.section && (
@@ -127,27 +125,28 @@ export default function App() {
             ))}
           </aside>
 
-          {/* Main content */}
-          <main style={{ flex: 1, padding: "28px 10% 60px" }}>
-            <div style={{ marginBottom: 20 }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
-                <h1 style={{ fontSize: 22, fontWeight: 500, color: "#0f2b5b" }}>
-                  {tab === "personas" ? "Gestion de personas" : "Nueva factura"}
-                </h1>
-                {tab !== "personas" && (
-                  <span style={{ background: "rgba(91,180,245,0.12)", color: "#0f2b5b", fontSize: 11, padding: "3px 10px", borderRadius: 20, fontWeight: 500 }}>
-                    {tab === "autonomo" ? "Autonomo -> Sociedad" : "Sociedad -> Cliente"}
-                  </span>
-                )}
+          <main style={{ flex: 1, padding: "28px 24px 60px", display: "flex", justifyContent: "center" }}>
+            <div style={{ width: "100%", maxWidth: 680 }}>
+              <div style={{ marginBottom: 20 }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
+                  <h1 style={{ fontSize: 22, fontWeight: 500, color: "#0f2b5b" }}>
+                    {tab === "personas" ? "Gestion de personas" : "Nueva factura"}
+                  </h1>
+                  {tab !== "personas" && (
+                    <span style={{ background: "rgba(91,180,245,0.12)", color: "#0f2b5b", fontSize: 11, padding: "3px 10px", borderRadius: 20, fontWeight: 500 }}>
+                      {tab === "autonomo" ? "Autonomo -> Sociedad" : "Sociedad -> Cliente"}
+                    </span>
+                  )}
+                </div>
+                <p style={{ fontSize: 13, color: "#9aa0b8" }}>
+                  {tab === "personas" ? "Administra los datos de socios y clientes." : "Rellena los campos y descarga el PDF listo para enviar."}
+                </p>
               </div>
-              <p style={{ fontSize: 13, color: "#9aa0b8" }}>
-                {tab === "personas" ? "Administra los datos de socios y clientes." : "Rellena los campos y descarga el PDF listo para enviar."}
-              </p>
-            </div>
 
-            {tab === "autonomo" && <FacturaAutonomo />}
-            {tab === "sociedad" && <FacturaSociedad />}
-            {tab === "personas" && <GestionPersonas />}
+              {tab === "autonomo" && <FacturaAutonomo />}
+              {tab === "sociedad" && <FacturaSociedad />}
+              {tab === "personas" && <GestionPersonas />}
+            </div>
           </main>
 
         </div>
@@ -155,4 +154,3 @@ export default function App() {
     </PersonasProvider>
   );
 }
-
