@@ -85,7 +85,7 @@ export default function GestionPersonas() {
           <span>Socios - Autonomos</span>
           <button onClick={() => { setShowNewA(true); setEditingA(null); setNewA(EMPTY_AUTONOMO); }}
             style={{ fontSize: 12, padding: "4px 12px", borderRadius: 6, border: "1px solid var(--blue-accent)", background: "none", cursor: "pointer", color: "var(--navy)", fontWeight: 500 }}>
-            + AÃ±adir
+            + Añadir
           </button>
         </div>
         {autonomos.map(a => (
@@ -111,7 +111,7 @@ export default function GestionPersonas() {
           <span>Clientes</span>
           <button onClick={() => { setShowNewC(true); setEditingC(null); setNewC(EMPTY_CLIENTE); }}
             style={{ fontSize: 12, padding: "4px 12px", borderRadius: 6, border: "1px solid var(--blue-accent)", background: "none", cursor: "pointer", color: "var(--navy)", fontWeight: 500 }}>
-            + AÃ±adir
+            + Añadir
           </button>
         </div>
         {clientes.map(c => (
