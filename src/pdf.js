@@ -10,14 +10,14 @@ function fmtDate(d) {
 }
 
 function fmtMoney(n) {
-  return Number(n).toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + "\u20AC";
+  return Number(n).toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " \u20AC";
 }
 
 const NAVY  = [15, 43, 91];
 const BLUE  = [30, 100, 200];
 const GRAY1 = [40, 40, 40];
-const GRAY2 = [100, 100, 110];
-const GRAY3 = [160, 160, 170];
+const GRAY2 = [120, 120, 130];
+const GRAY3 = [170, 170, 178];
 const BORD  = [220, 224, 235];
 
 async function loadLogo() {
@@ -33,16 +33,16 @@ async function loadLogo() {
       resolve(canvas.toDataURL("image/png"));
     };
     img.onerror = () => resolve(null);
-    img.src = process.env.PUBLIC_URL + "/logo.png";
+    img.src = process.env.PUBLIC_URL + "/logo-negro.png";
   });
 }
 
 function drawHeader(doc, { numero, fecha, logoData }) {
   if (logoData) {
-    doc.addImage(logoData, "PNG", 14, 8, 36, 28);
+    doc.addImage(logoData, "PNG", 14, 10, 22, 18);
   }
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(13);
+  doc.setFontSize(12);
   doc.setTextColor(...NAVY);
   doc.text("FACTURA N\u00BA: " + numero, 196, 14, { align: "right" });
   doc.setFont("helvetica", "normal");
@@ -50,12 +50,12 @@ function drawHeader(doc, { numero, fecha, logoData }) {
   doc.setTextColor(...GRAY2);
   doc.text("Fecha: " + fmtDate(fecha), 196, 20, { align: "right" });
   doc.setDrawColor(...BORD);
-  doc.setLineWidth(0.4);
-  doc.line(14, 38, 196, 38);
+  doc.setLineWidth(0.3);
+  doc.line(14, 32, 196, 32);
 }
 
 function drawParties(doc, { left, right, leftTitle, rightTitle }) {
-  let y = 44;
+  let y = 40;
   doc.setFont("helvetica", "bold");
   doc.setFontSize(9);
   doc.setTextColor(...GRAY1);
@@ -63,7 +63,7 @@ function drawParties(doc, { left, right, leftTitle, rightTitle }) {
   doc.text(rightTitle + ":", 108, y);
   y += 5;
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(10);
+  doc.setFontSize(9.5);
   doc.setTextColor(...BLUE);
   doc.text(left[0], 14, y);
   doc.text(right[0], 108, y);
@@ -71,62 +71,76 @@ function drawParties(doc, { left, right, leftTitle, rightTitle }) {
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8.5);
   doc.setTextColor(...GRAY1);
-  left.slice(1).forEach((line, i) => { doc.text(line, 14, y + i * 4.5); });
-  right.slice(1).forEach((line, i) => { doc.text(line, 108, y + i * 4.5); });
-  const maxLines = Math.max(left.length, right.length);
-  const afterY = y + maxLines * 4.5 + 4;
-  doc.setDrawColor(...BORD);
-  doc.setLineWidth(0.3);
-  doc.line(14, afterY, 196, afterY);
-  return afterY + 6;
+  left.slice(1).forEach((line, i) => { if (line) doc.text(line, 14, y + i * 4.5); });
+  right.slice(1).forEach((line, i) => { if (line) doc.text(line, 108, y + i * 4.5); });
+  const maxLines = Math.max(left.filter(Boolean).length, right.filter(Boolean).length);
+  return y + (maxLines - 1) * 4.5 + 12;
 }
 
 function drawTotals(doc, rows, grand) {
-  const W = 196, bx = 126;
-  let y = doc.lastAutoTable.finalY + 8;
-  rows.forEach(({ label, amount, sub }) => {
-    doc.setFont("helvetica", "normal");
+  const tableBottom = doc.lastAutoTable.finalY;
+  const W = 196;
+  const boxW = 80;
+  const boxX = W - boxW;
+
+  let y = tableBottom + 14;
+
+  // Titulo "Total" centrado sobre el bloque
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(11);
+  doc.setTextColor(...GRAY2);
+  doc.text("Total", boxX + boxW / 2, y, { align: "center" });
+  y += 4;
+
+  doc.setDrawColor(...BORD);
+  doc.setLineWidth(0.3);
+  doc.line(boxX, y, W, y);
+  y += 6;
+
+  rows.forEach(({ label, pct, amount, bold }) => {
+    doc.setFont("helvetica", bold ? "bold" : "normal");
     doc.setFontSize(9);
     doc.setTextColor(...GRAY2);
-    doc.text(label, bx, y);
-    if (sub) {
-      doc.setFontSize(8.5);
-      doc.text(sub, bx + 30, y);
+    doc.text(label, boxX + 2, y);
+    if (pct) {
+      doc.text(pct, boxX + 28, y);
     }
-    doc.setFontSize(9);
-    doc.setTextColor(...GRAY1);
-    doc.text(amount, W, y, { align: "right" });
+    doc.setTextColor(bold ? GRAY1 : GRAY2);
+    doc.text(amount, W - 2, y, { align: "right" });
     doc.setDrawColor(...BORD);
     doc.setLineWidth(0.2);
-    doc.line(bx, y + 2, W, y + 2);
-    y += 8;
+    doc.line(boxX, y + 3, W, y + 3);
+    y += 9;
   });
-  doc.setDrawColor(...BORD);
-  doc.setLineWidth(0.4);
-  doc.line(bx, y - 2, W, y - 2);
+
+  // Fila total en negrita
   doc.setFont("helvetica", "bold");
   doc.setFontSize(10);
   doc.setTextColor(...GRAY1);
-  doc.text("Total", bx, y + 4);
-  doc.text(grand, W, y + 4, { align: "right" });
+  doc.text("Total", boxX + 2, y);
+  doc.text(grand, W - 2, y, { align: "right" });
+  doc.setDrawColor(...BORD);
   doc.setLineWidth(0.4);
-  doc.line(bx, y + 7, W, y + 7);
-  return y + 16;
+  doc.line(boxX, y + 3, W, y + 3);
+
+  return y + 14;
 }
 
-function drawIban(doc, iban, paymentText) {
-  const y = 245;
+function drawIban(doc, iban) {
+  const y = 248;
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(16);
+  doc.setFontSize(15);
   doc.setTextColor(...GRAY2);
   doc.text("N\u00BA de cuenta: " + iban, 105, y, { align: "center" });
-  doc.setFontSize(8);
-  doc.setTextColor(...GRAY3);
-  const lines = doc.splitTextToSize(paymentText, 80);
-  lines.forEach((line, i) => { doc.text(line, 196, y + 10 + i * 4.5, { align: "right" }); });
-}
 
-const PAYMENT_TEXT = "El pago se realizara en un plazo de 15 dias naturales desde la emision de esta factura, se realizara mediante transferencia bancaria.";
+  const payText = "El pago se realizara en un plazo de 15 dias naturales desde la emision de esta factura, se realizara mediante transferencia bancaria.";
+  doc.setFontSize(7.5);
+  doc.setTextColor(...GRAY3);
+  const lines = doc.splitTextToSize(payText, 72);
+  lines.forEach((line, i) => {
+    doc.text(line, 196, y + 10 + i * 4, { align: "right" });
+  });
+}
 
 export async function generateAutonomoPDF(data) {
   const { numero, fecha, emisorNombre, emisorDni, emisorDireccion, emisorCiudad,
@@ -139,9 +153,9 @@ export async function generateAutonomoPDF(data) {
   const total = base + ivaAmt - irpfAmt;
 
   const doc = new jsPDF({ unit: "mm", format: "a4" });
-  const logoData = await loadLogo();
 
-  drawHeader(doc, { numero, fecha, logoData });
+  // Sin logo en facturas de autonomo
+  drawHeader(doc, { numero, fecha, logoData: null });
 
   const tableY = drawParties(doc, {
     leftTitle: "Emisor",
@@ -160,23 +174,23 @@ export async function generateAutonomoPDF(data) {
     }),
     columnStyles: {
       0: { cellWidth: "auto" },
-      1: { halign: "right", cellWidth: 22 },
-      2: { halign: "right", cellWidth: 30 },
-      3: { halign: "right", cellWidth: 32 },
+      1: { halign: "right", cellWidth: 24 },
+      2: { halign: "right", cellWidth: 32 },
+      3: { halign: "right", cellWidth: 34 },
     },
-    headStyles: { fillColor: false, textColor: GRAY3, fontStyle: "normal", fontSize: 8, lineColor: BORD, lineWidth: { bottom: 0.3 } },
-    bodyStyles: { fontSize: 9, textColor: GRAY1, lineColor: BORD, lineWidth: { bottom: 0.2 } },
-    alternateRowStyles: { fillColor: [250, 251, 254] },
+    headStyles: { fillColor: false, textColor: GRAY1, fontStyle: "bold", fontSize: 8.5, lineColor: BORD, lineWidth: { bottom: 0.3 } },
+    bodyStyles: { fontSize: 9, textColor: GRAY2, lineColor: BORD, lineWidth: { bottom: 0.2 }, cellPadding: { top: 4, bottom: 4, left: 2, right: 2 } },
+    alternateRowStyles: { fillColor: false },
     tableLineWidth: 0,
   });
 
   drawTotals(doc, [
     { label: "Base Imponible", amount: fmtMoney(base) },
-    { label: "IVA", sub: `${ivaPct}%`, amount: fmtMoney(ivaAmt) },
-    { label: "IRPF", sub: `-${irpfPct}%`, amount: "-" + fmtMoney(irpfAmt) },
+    { label: "IVA", pct: `(${ivaPct}%)`, amount: fmtMoney(ivaAmt) },
+    { label: "IRPF", pct: `(-${irpfPct}%)`, amount: "-" + fmtMoney(irpfAmt) },
   ], fmtMoney(total));
 
-  drawIban(doc, iban, PAYMENT_TEXT);
+  drawIban(doc, iban);
   doc.save(`Factura_${numero}.pdf`);
 }
 
@@ -213,21 +227,21 @@ export async function generateSociedadPDF(data) {
     columnStyles: {
       0: { cellWidth: "auto" },
       1: { halign: "right", cellWidth: 22 },
-      2: { halign: "right", cellWidth: 28 },
+      2: { halign: "right", cellWidth: 26 },
       3: { halign: "right", textColor: GRAY3, cellWidth: 28 },
       4: { halign: "right", cellWidth: 32 },
     },
-    headStyles: { fillColor: false, textColor: GRAY3, fontStyle: "normal", fontSize: 8, lineColor: BORD, lineWidth: { bottom: 0.3 } },
-    bodyStyles: { fontSize: 9, textColor: GRAY1, lineColor: BORD, lineWidth: { bottom: 0.2 } },
-    alternateRowStyles: { fillColor: [250, 251, 254] },
+    headStyles: { fillColor: false, textColor: GRAY1, fontStyle: "bold", fontSize: 8.5, lineColor: BORD, lineWidth: { bottom: 0.3 } },
+    bodyStyles: { fontSize: 9, textColor: GRAY2, lineColor: BORD, lineWidth: { bottom: 0.2 }, cellPadding: { top: 4, bottom: 4, left: 2, right: 2 } },
+    alternateRowStyles: { fillColor: false },
     tableLineWidth: 0,
   });
 
   drawTotals(doc, [
     { label: "Base Imponible", amount: fmtMoney(base) },
-    { label: "IVA", sub: `${ivaPct}%`, amount: fmtMoney(ivaTotal) },
+    { label: "IVA", pct: `${ivaPct}%`, amount: fmtMoney(ivaTotal) },
   ], fmtMoney(total));
 
-  drawIban(doc, iban, PAYMENT_TEXT);
+  drawIban(doc, iban);
   doc.save(`Factura_${numero}.pdf`);
 }
