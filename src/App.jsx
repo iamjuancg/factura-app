@@ -128,7 +128,7 @@ export default function App() {
           </aside>
 
           {/* Main content */}
-          <main style={{ flex: 1, padding: "28px 32px 60px", maxWidth: 760 }}>
+          <main style={{ flex: 1, padding: "28px 10% 60px" }}>
             <div style={{ marginBottom: 20 }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
                 <h1 style={{ fontSize: 22, fontWeight: 500, color: "#0f2b5b" }}>
@@ -155,3 +155,4 @@ export default function App() {
     </PersonasProvider>
   );
 }
+
