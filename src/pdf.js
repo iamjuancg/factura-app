@@ -67,6 +67,7 @@ function drawHeader(doc, { numero, fecha, logoData }) {
   doc.setFontSize(9);
   sc(doc, GRAY2);
   doc.text("Fecha: " + fmtDate(fecha), 196, 20, { align: "right" });
+  // Sin linea aqui - va despues de Emisor/Receptor
 }
 
 function drawParties(doc, { left, right, leftTitle, rightTitle }) {
@@ -161,11 +162,25 @@ const TABLE_STYLES = {
     fontSize: 9,
     textColor: [120,120,130],
     lineColor: [220,224,235],
-    lineWidth: { bottom: 0.2 },
+    lineWidth: { top: 0, bottom: 0.2 },
     cellPadding: { top: 4, bottom: 4, left: 2, right: 2 },
   },
   alternateRowStyles: { fillColor: false },
   tableLineWidth: 0,
+  didDrawCell: function(data) {
+    // Dibuja linea debajo de cada fila del body
+    if (data.section === "body") {
+      const doc = data.doc;
+      doc.setDrawColor(220, 224, 235);
+      doc.setLineWidth(0.2);
+      doc.line(
+        data.cell.x,
+        data.cell.y + data.cell.height,
+        data.cell.x + data.cell.width,
+        data.cell.y + data.cell.height
+      );
+    }
+  },
 };
 
 export async function generateAutonomoPDF(data) {
