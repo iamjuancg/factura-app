@@ -10,7 +10,28 @@ function fmtDate(d) {
 }
 
 function fmtMoney(n) {
-  return Number(n).toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " \u20AC";
+  return Number(n).toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + "\u20AC";
+}
+
+function fmtTarifa(n) {
+  const num = Number(n);
+  if (Number.isInteger(num)) return num + "\u20AC";
+  return num.toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + "\u20AC";
+}
+
+// Reemplaza caracteres especiales que jsPDF no renderiza bien
+function safe(str) {
+  if (!str) return "";
+  return str
+    .replace(/\u00e1/g, "a").replace(/\u00e9/g, "e").replace(/\u00ed/g, "i")
+    .replace(/\u00f3/g, "o").replace(/\u00fa/g, "u")
+    .replace(/\u00c1/g, "A").replace(/\u00c9/g, "E").replace(/\u00cd/g, "I")
+    .replace(/\u00d3/g, "O").replace(/\u00da/g, "U")
+    .replace(/\u00f1/g, "\u00f1").replace(/\u00d1/g, "\u00d1")
+    .replace(/\u00ba/g, "\u00ba").replace(/\u00aa/g, "\u00aa")
+    .replace(/\u00fc/g, "u").replace(/\u00e0/g, "a")
+    .replace(/\u00e8/g, "e").replace(/\u00ec/g, "i")
+    .replace(/\u00f2/g, "o").replace(/\u00f9/g, "u");
 }
 
 const NAVY  = [15, 43, 91];
@@ -20,8 +41,8 @@ const GRAY2 = [120, 120, 130];
 const GRAY3 = [170, 170, 178];
 const BORD  = [220, 224, 235];
 
-function setColor(doc, c) { doc.setTextColor(c[0], c[1], c[2]); }
-function setDraw(doc, c) { doc.setDrawColor(c[0], c[1], c[2]); }
+function sc(doc, c) { doc.setTextColor(c[0], c[1], c[2]); }
+function sd(doc, c) { doc.setDrawColor(c[0], c[1], c[2]); }
 
 async function loadLogo() {
   return new Promise((resolve) => {
@@ -42,59 +63,57 @@ async function loadLogo() {
 
 function drawHeader(doc, { numero, fecha, logoData }) {
   if (logoData) {
-    doc.addImage(logoData, "PNG", 14, 10, 22, 18);
+    doc.addImage(logoData, "PNG", 14, 8, 38, 30);
   }
   doc.setFont("helvetica", "bold");
   doc.setFontSize(12);
-  setColor(doc, NAVY);
+  sc(doc, NAVY);
   doc.text("FACTURA N\u00BA: " + numero, 196, 14, { align: "right" });
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
-  setColor(doc, GRAY2);
+  sc(doc, GRAY2);
   doc.text("Fecha: " + fmtDate(fecha), 196, 20, { align: "right" });
-  setDraw(doc, BORD);
+  sd(doc, BORD);
   doc.setLineWidth(0.3);
-  doc.line(14, 32, 196, 32);
+  doc.line(14, 42, 196, 42);
 }
 
 function drawParties(doc, { left, right, leftTitle, rightTitle }) {
-  let y = 40;
+  let y = 50;
   doc.setFont("helvetica", "bold");
   doc.setFontSize(9);
-  setColor(doc, GRAY1);
+  sc(doc, GRAY1);
   doc.text(leftTitle + ":", 14, y);
   doc.text(rightTitle + ":", 108, y);
   y += 5;
   doc.setFont("helvetica", "bold");
   doc.setFontSize(9.5);
-  setColor(doc, BLUE);
+  sc(doc, BLUE);
   doc.text(left[0], 14, y);
   doc.text(right[0], 108, y);
   y += 5;
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8.5);
-  setColor(doc, GRAY1);
-  left.slice(1).forEach((line, i) => { if (line) doc.text(line, 14, y + i * 4.5); });
-  right.slice(1).forEach((line, i) => { if (line) doc.text(line, 108, y + i * 4.5); });
+  sc(doc, GRAY1);
+  left.slice(1).forEach((line, i) => { if (line) doc.text(safe(line), 14, y + i * 4.5); });
+  right.slice(1).forEach((line, i) => { if (line) doc.text(safe(line), 108, y + i * 4.5); });
   const maxLines = Math.max(left.filter(Boolean).length, right.filter(Boolean).length);
-  return y + (maxLines - 1) * 4.5 + 12;
+  return y + (maxLines - 1) * 4.5 + 14;
 }
 
 function drawTotals(doc, rows, grand) {
-  const tableBottom = doc.lastAutoTable.finalY;
   const W = 196;
   const boxW = 80;
   const boxX = W - boxW;
-
-  let y = tableBottom + 14;
+  let y = doc.lastAutoTable.finalY + 14;
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(11);
-  setColor(doc, GRAY2);
+  sc(doc, GRAY2);
   doc.text("Total", boxX + boxW / 2, y, { align: "center" });
   y += 4;
 
-  setDraw(doc, BORD);
+  sd(doc, BORD);
   doc.setLineWidth(0.3);
   doc.line(boxX, y, W, y);
   y += 6;
@@ -102,14 +121,11 @@ function drawTotals(doc, rows, grand) {
   rows.forEach(({ label, pct, amount }) => {
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
-    setColor(doc, GRAY2);
+    sc(doc, GRAY2);
     doc.text(label, boxX + 2, y);
-    if (pct) {
-      doc.text(pct, boxX + 30, y);
-    }
-    setColor(doc, GRAY2);
+    if (pct) doc.text(pct, boxX + 30, y);
     doc.text(amount, W - 2, y, { align: "right" });
-    setDraw(doc, BORD);
+    sd(doc, BORD);
     doc.setLineWidth(0.2);
     doc.line(boxX, y + 3, W, y + 3);
     y += 9;
@@ -117,13 +133,12 @@ function drawTotals(doc, rows, grand) {
 
   doc.setFont("helvetica", "bold");
   doc.setFontSize(10);
-  setColor(doc, GRAY1);
+  sc(doc, GRAY1);
   doc.text("Total", boxX + 2, y);
   doc.text(grand, W - 2, y, { align: "right" });
-  setDraw(doc, BORD);
+  sd(doc, BORD);
   doc.setLineWidth(0.4);
   doc.line(boxX, y + 3, W, y + 3);
-
   return y + 14;
 }
 
@@ -131,11 +146,11 @@ function drawIban(doc, iban) {
   const y = 248;
   doc.setFont("helvetica", "normal");
   doc.setFontSize(15);
-  setColor(doc, GRAY2);
+  sc(doc, GRAY2);
   doc.text("N\u00BA de cuenta: " + iban, 105, y, { align: "center" });
   const payText = "El pago se realizara en un plazo de 15 dias naturales desde la emision de esta factura, se realizara mediante transferencia bancaria.";
   doc.setFontSize(7.5);
-  setColor(doc, GRAY3);
+  sc(doc, GRAY3);
   const lines = doc.splitTextToSize(payText, 72);
   lines.forEach((line, i) => {
     doc.text(line, 196, y + 10 + i * 4, { align: "right" });
@@ -153,7 +168,6 @@ export async function generateAutonomoPDF(data) {
   const total = base + ivaAmt - irpfAmt;
 
   const doc = new jsPDF({ unit: "mm", format: "a4" });
-
   drawHeader(doc, { numero, fecha, logoData: null });
 
   const tableY = drawParties(doc, {
@@ -166,10 +180,10 @@ export async function generateAutonomoPDF(data) {
   doc.autoTable({
     startY: tableY,
     margin: { left: 14, right: 14 },
-    head: [["Descripci\u00F3n", "Cantidad", "Precio", "Total"]],
+    head: [["Descripcion", "Cantidad", "Precio", "Total"]],
     body: lineas.map(l => {
       const sub = Number(l.cantidad) * Number(l.precio);
-      return [l.descripcion, Number(l.cantidad).toLocaleString("es-ES"), fmtMoney(l.precio), fmtMoney(sub)];
+      return [safe(l.descripcion), Number(l.cantidad).toLocaleString("es-ES"), fmtMoney(l.precio), fmtMoney(sub)];
     }),
     columnStyles: {
       0: { cellWidth: "auto" },
@@ -204,7 +218,6 @@ export async function generateSociedadPDF(data) {
 
   const doc = new jsPDF({ unit: "mm", format: "a4" });
   const logoData = await loadLogo();
-
   drawHeader(doc, { numero, fecha, logoData });
 
   const tableY = drawParties(doc, {
@@ -217,11 +230,11 @@ export async function generateSociedadPDF(data) {
   doc.autoTable({
     startY: tableY,
     margin: { left: 14, right: 14 },
-    head: [["Descripci\u00F3n", "Cantidad", "Tarifa", "IVA", "Total"]],
+    head: [["Descripcion", "Cantidad", "Tarifa", "IVA", "Total"]],
     body: lineas.map(l => {
       const sub = Number(l.cantidad) * Number(l.tarifa);
       const ivaLine = sub * ivaPct / 100;
-      return [l.descripcion, Number(l.cantidad).toLocaleString("es-ES"), fmtMoney(l.tarifa), fmtMoney(ivaLine), fmtMoney(sub + ivaLine)];
+      return [safe(l.descripcion), Number(l.cantidad).toLocaleString("es-ES"), fmtTarifa(l.tarifa), fmtMoney(ivaLine), fmtMoney(sub + ivaLine)];
     }),
     columnStyles: {
       0: { cellWidth: "auto" },
