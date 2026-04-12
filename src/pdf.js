@@ -43,21 +43,26 @@ async function loadLogo() {
     const img = new Image();
     img.crossOrigin = "anonymous";
     img.onload = () => {
-      const canvas = document.createElement("canvas");
-      canvas.width = img.width;
-      canvas.height = img.height;
-      const ctx = canvas.getContext("2d");
-      ctx.drawImage(img, 0, 0);
-      resolve(canvas.toDataURL("image/png"));
+      // Mantener proporciones originales de la imagen
+      const ratio = img.width / img.height;
+      const h = 28;
+      const w = h * ratio;
+      resolve({ data: (() => {
+        const canvas = document.createElement("canvas");
+        canvas.width = img.width;
+        canvas.height = img.height;
+        canvas.getContext("2d").drawImage(img, 0, 0);
+        return canvas.toDataURL("image/png");
+      })(), w, h });
     };
     img.onerror = () => resolve(null);
     img.src = process.env.PUBLIC_URL + "/logo-negro.png";
   });
 }
 
-function drawHeader(doc, { numero, fecha, logoData }) {
-  if (logoData) {
-    doc.addImage(logoData, "PNG", 14, 8, 38, 30);
+function drawHeader(doc, { numero, fecha, logo }) {
+  if (logo) {
+    doc.addImage(logo.data, "PNG", 14, 8, logo.w, logo.h);
   }
   doc.setFont("helvetica", "bold");
   doc.setFontSize(12);
@@ -67,7 +72,6 @@ function drawHeader(doc, { numero, fecha, logoData }) {
   doc.setFontSize(9);
   sc(doc, GRAY2);
   doc.text("Fecha: " + fmtDate(fecha), 196, 20, { align: "right" });
-  // Sin linea aqui - va despues de Emisor/Receptor
 }
 
 function drawParties(doc, { left, right, leftTitle, rightTitle }) {
@@ -138,11 +142,11 @@ function drawIban(doc, iban) {
   const y = 248;
   doc.setFont("helvetica", "normal");
   doc.setFontSize(15);
-  sc(doc, GRAY2);
+  sc(doc, GRAY1);
   doc.text("N\u00BA de cuenta: " + iban, 105, y, { align: "center" });
   const payText = "El pago se realizara en un plazo de 15 dias naturales desde la emision de esta factura, se realizara mediante transferencia bancaria.";
   doc.setFontSize(7.5);
-  sc(doc, GRAY3);
+  sc(doc, GRAY2);
   const lines = doc.splitTextToSize(payText, 72);
   lines.forEach((line, i) => {
     doc.text(line, 196, y + 10 + i * 4, { align: "right" });
@@ -167,18 +171,22 @@ const TABLE_STYLES = {
   },
   alternateRowStyles: { fillColor: false },
   tableLineWidth: 0,
-  didDrawCell: function(data) {
-    // Dibuja linea debajo de cada fila del body
-    if (data.section === "body") {
-      const doc = data.doc;
-      doc.setDrawColor(220, 224, 235);
-      doc.setLineWidth(0.2);
-      doc.line(
-        data.cell.x,
-        data.cell.y + data.cell.height,
-        data.cell.x + data.cell.width,
-        data.cell.y + data.cell.height
-      );
+  didDrawPage: function(data) {
+    // Dibuja lineas entre filas manualmente
+    const doc = data.doc;
+    if (data.table && data.table.body) {
+      data.table.body.forEach((row) => {
+        if (row.cells) {
+          const cell = Object.values(row.cells)[0];
+          if (cell) {
+            doc.setDrawColor(220, 224, 235);
+            doc.setLineWidth(0.2);
+            doc.line(data.settings.margin.left, cell.y + cell.height,
+              data.settings.margin.right ? 210 - data.settings.margin.right : 196,
+              cell.y + cell.height);
+          }
+        }
+      });
     }
   },
 };
@@ -194,7 +202,7 @@ export async function generateAutonomoPDF(data) {
   const total = base + ivaAmt - irpfAmt;
 
   const doc = new jsPDF({ unit: "mm", format: "a4" });
-  drawHeader(doc, { numero, fecha, logoData: null });
+  drawHeader(doc, { numero, fecha, logo: null });
 
   const tableY = drawParties(doc, {
     leftTitle: "Emisor",
@@ -240,8 +248,8 @@ export async function generateSociedadPDF(data) {
   const total = base + ivaTotal;
 
   const doc = new jsPDF({ unit: "mm", format: "a4" });
-  const logoData = await loadLogo();
-  drawHeader(doc, { numero, fecha, logoData });
+  const logo = await loadLogo();
+  drawHeader(doc, { numero, fecha, logo });
 
   const tableY = drawParties(doc, {
     leftTitle: "Emisor",
