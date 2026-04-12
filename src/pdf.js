@@ -177,7 +177,7 @@ const HEAD_STYLES = {
 };
 const BODY_STYLES = {
   fontSize: 9, textColor: [130,130,140],
-  lineColor: [210,215,228], lineWidth: { top: 0, bottom: 0.3 },
+  lineColor: [210,215,228], lineWidth: { top: 0.3, bottom: 0.3, left: 0, right: 0 },
   cellPadding: { top: 5, bottom: 5, left: 2, right: 2 },
 };
 
