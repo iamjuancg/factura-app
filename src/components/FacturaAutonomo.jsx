@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+﻿import { useState, useEffect } from "react";
 import Field from "./Field";
 import * as S from "./styles";
 import { generateAutonomoPDF } from "../pdf";
@@ -6,18 +6,34 @@ import { usePersonas } from "../context/PersonasContext";
 
 const today = new Date().toISOString().split("T")[0];
 const LINE_GRID = "2fr 80px 100px 100px 36px";
+const STORAGE_KEY = "factura_autonomo_selected";
 
 export default function FacturaAutonomo() {
-  const { autonomos, receptor } = usePersonas();
+  const { autonomos, receptor, loading, error } = usePersonas();
 
   const [numero, setNumero] = useState("000002");
   const [fecha, setFecha] = useState(today);
-  const [selectedId, setSelectedId] = useState(autonomos[0]?.id ?? null);
+  const [selectedId, setSelectedId] = useState(null);
   const [ivaPct, setIvaPct] = useState(21);
   const [irpfPct, setIrpfPct] = useState(15);
   const [lineas, setLineas] = useState([{ id: 1, descripcion: "Gestion de proyectos", cantidad: 1, precio: 14320 }]);
 
+  // Cargar ultimo seleccionado
+  useEffect(() => {
+    if (autonomos.length > 0) {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      const found = autonomos.find(a => a.nombre === saved);
+      setSelectedId(found ? found.id : autonomos[0].id);
+    }
+  }, [autonomos]);
+
   const emisor = autonomos.find(a => a.id === selectedId) || autonomos[0];
+
+  const handleSelect = (id) => {
+    setSelectedId(id);
+    const found = autonomos.find(a => a.id === id);
+    if (found) localStorage.setItem(STORAGE_KEY, found.nombre);
+  };
 
   const addLinea = () => setLineas(l => [...l, { id: Date.now(), descripcion: "", cantidad: 1, precio: 0 }]);
   const removeLinea = id => setLineas(l => l.filter(x => x.id !== id));
@@ -43,6 +59,20 @@ export default function FacturaAutonomo() {
     });
   };
 
+  if (loading) return (
+    <div style={{ textAlign: "center", padding: 60, color: "var(--text-3)", fontSize: 14 }}>
+      <div style={{ marginBottom: 12, fontSize: 24 }}>â³</div>
+      Cargando datos...
+    </div>
+  );
+
+  if (error) return (
+    <div style={{ textAlign: "center", padding: 60, color: "var(--danger)", fontSize: 14 }}>
+      <div style={{ marginBottom: 12, fontSize: 24 }}>âš ï¸</div>
+      {error}
+    </div>
+  );
+
   return (
     <div>
       <div style={S.card}>
@@ -56,7 +86,7 @@ export default function FacturaAutonomo() {
       <div style={S.card}>
         <div style={S.sectionTitle}>Emisor - Autonomo</div>
         <Field label="Seleccionar socio">
-          <select value={selectedId} onChange={e => setSelectedId(Number(e.target.value))}
+          <select value={selectedId || ""} onChange={e => handleSelect(Number(e.target.value))}
             style={{ padding: "8px 12px", borderRadius: "var(--radius)", border: "1px solid var(--border)", fontSize: 14, background: "var(--surface)", color: "var(--navy)", cursor: "pointer" }}>
             {autonomos.map(a => <option key={a.id} value={a.id}>{a.nombre}</option>)}
           </select>
@@ -100,7 +130,7 @@ export default function FacturaAutonomo() {
             <button style={S.delBtn} onClick={() => removeLinea(l.id)}>x</button>
           </div>
         ))}
-        <button style={S.addBtn} onClick={addLinea}>+ Añadir linea</button>
+        <button style={S.addBtn} onClick={addLinea}>+ AÃ±adir linea</button>
       </div>
 
       <div style={S.card}>

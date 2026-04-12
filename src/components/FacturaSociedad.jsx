@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+﻿import { useState, useEffect } from "react";
 import Field from "./Field";
 import * as S from "./styles";
 import { generateSociedadPDF } from "../pdf";
@@ -6,21 +6,36 @@ import { usePersonas } from "../context/PersonasContext";
 
 const today = new Date().toISOString().split("T")[0];
 const LINE_GRID = "2fr 80px 100px 100px 100px 36px";
+const STORAGE_KEY = "factura_sociedad_selected";
 
 export default function FacturaSociedad() {
-  const { clientes, receptor } = usePersonas();
+  const { clientes, receptor, loading, error } = usePersonas();
 
   const [numero, setNumero] = useState("000010");
   const [fecha, setFecha] = useState(today);
-  const [selectedId, setSelectedId] = useState(clientes[0]?.id ?? null);
+  const [selectedId, setSelectedId] = useState(null);
   const [ivaPct, setIvaPct] = useState(21);
   const [lineas, setLineas] = useState([
     { id: 1, descripcion: "Gestion de proyectos (tipo 1)", cantidad: 177, tarifa: 78 },
     { id: 2, descripcion: "Gestion de proyectos (tipo 2)", cantidad: 177, tarifa: 72 },
-    { id: 3, descripcion: "Ejecucion de proyectos",        cantidad: 80,  tarifa: 62 },
+    { id: 3, descripcion: "Ejecucion de proyectos", cantidad: 80, tarifa: 62 },
   ]);
 
+  useEffect(() => {
+    if (clientes.length > 0) {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      const found = clientes.find(c => c.nombre === saved);
+      setSelectedId(found ? found.id : clientes[0].id);
+    }
+  }, [clientes]);
+
   const cliente = clientes.find(c => c.id === selectedId) || clientes[0];
+
+  const handleSelect = (id) => {
+    setSelectedId(id);
+    const found = clientes.find(c => c.id === id);
+    if (found) localStorage.setItem(STORAGE_KEY, found.nombre);
+  };
 
   const addLinea = () => setLineas(l => [...l, { id: Date.now(), descripcion: "", cantidad: 1, tarifa: 0 }]);
   const removeLinea = id => setLineas(l => l.filter(x => x.id !== id));
@@ -43,6 +58,20 @@ export default function FacturaSociedad() {
     });
   };
 
+  if (loading) return (
+    <div style={{ textAlign: "center", padding: 60, color: "var(--text-3)", fontSize: 14 }}>
+      <div style={{ marginBottom: 12, fontSize: 24 }}>â³</div>
+      Cargando datos...
+    </div>
+  );
+
+  if (error) return (
+    <div style={{ textAlign: "center", padding: 60, color: "var(--danger)", fontSize: 14 }}>
+      <div style={{ marginBottom: 12, fontSize: 24 }}>âš ï¸</div>
+      {error}
+    </div>
+  );
+
   return (
     <div>
       <div style={S.card}>
@@ -64,7 +93,7 @@ export default function FacturaSociedad() {
       <div style={S.card}>
         <div style={S.sectionTitle}>Receptor - Cliente</div>
         <Field label="Seleccionar cliente">
-          <select value={selectedId} onChange={e => setSelectedId(Number(e.target.value))}
+          <select value={selectedId || ""} onChange={e => handleSelect(Number(e.target.value))}
             style={{ padding: "8px 12px", borderRadius: "var(--radius)", border: "1px solid var(--border)", fontSize: 14, background: "var(--surface)", color: "var(--navy)", cursor: "pointer" }}>
             {clientes.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
           </select>
@@ -89,7 +118,7 @@ export default function FacturaSociedad() {
           <span />
         </div>
         {lineas.map(l => {
-          const sub     = Number(l.cantidad) * Number(l.tarifa);
+          const sub = Number(l.cantidad) * Number(l.tarifa);
           const ivaLine = sub * ivaPct / 100;
           return (
             <div key={l.id} style={{ display: "grid", gridTemplateColumns: LINE_GRID, gap: 8, alignItems: "center", marginBottom: 8 }}>
