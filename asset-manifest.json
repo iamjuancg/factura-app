@@ -1,19 +1,19 @@
 {
   "files": {
     "main.css": "/factura-app/static/css/main.26b077ce.css",
-    "main.js": "/factura-app/static/js/main.4b554e43.js",
+    "main.js": "/factura-app/static/js/main.96d26135.js",
     "static/js/239.1009d56b.chunk.js": "/factura-app/static/js/239.1009d56b.chunk.js",
     "static/js/213.10586316.chunk.js": "/factura-app/static/js/213.10586316.chunk.js",
     "static/js/732.b00eebe0.chunk.js": "/factura-app/static/js/732.b00eebe0.chunk.js",
     "index.html": "/factura-app/index.html",
     "main.26b077ce.css.map": "/factura-app/static/css/main.26b077ce.css.map",
-    "main.4b554e43.js.map": "/factura-app/static/js/main.4b554e43.js.map",
+    "main.96d26135.js.map": "/factura-app/static/js/main.96d26135.js.map",
     "239.1009d56b.chunk.js.map": "/factura-app/static/js/239.1009d56b.chunk.js.map",
     "213.10586316.chunk.js.map": "/factura-app/static/js/213.10586316.chunk.js.map",
     "732.b00eebe0.chunk.js.map": "/factura-app/static/js/732.b00eebe0.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.26b077ce.css",
-    "static/js/main.4b554e43.js"
+    "static/js/main.96d26135.js"
   ]
 }
