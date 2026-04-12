@@ -19,19 +19,13 @@ function fmtTarifa(n) {
   return num.toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + "\u20AC";
 }
 
-// Reemplaza caracteres especiales que jsPDF no renderiza bien
 function safe(str) {
   if (!str) return "";
   return str
     .replace(/\u00e1/g, "a").replace(/\u00e9/g, "e").replace(/\u00ed/g, "i")
     .replace(/\u00f3/g, "o").replace(/\u00fa/g, "u")
     .replace(/\u00c1/g, "A").replace(/\u00c9/g, "E").replace(/\u00cd/g, "I")
-    .replace(/\u00d3/g, "O").replace(/\u00da/g, "U")
-    .replace(/\u00f1/g, "\u00f1").replace(/\u00d1/g, "\u00d1")
-    .replace(/\u00ba/g, "\u00ba").replace(/\u00aa/g, "\u00aa")
-    .replace(/\u00fc/g, "u").replace(/\u00e0/g, "a")
-    .replace(/\u00e8/g, "e").replace(/\u00ec/g, "i")
-    .replace(/\u00f2/g, "o").replace(/\u00f9/g, "u");
+    .replace(/\u00d3/g, "O").replace(/\u00da/g, "U");
 }
 
 const NAVY  = [15, 43, 91];
@@ -73,13 +67,10 @@ function drawHeader(doc, { numero, fecha, logoData }) {
   doc.setFontSize(9);
   sc(doc, GRAY2);
   doc.text("Fecha: " + fmtDate(fecha), 196, 20, { align: "right" });
-  sd(doc, BORD);
-  doc.setLineWidth(0.3);
-  doc.line(14, 42, 196, 42);
 }
 
 function drawParties(doc, { left, right, leftTitle, rightTitle }) {
-  let y = 50;
+  let y = 46;
   doc.setFont("helvetica", "bold");
   doc.setFontSize(9);
   sc(doc, GRAY1);
@@ -157,6 +148,26 @@ function drawIban(doc, iban) {
   });
 }
 
+const TABLE_STYLES = {
+  headStyles: {
+    fillColor: false,
+    textColor: [40,40,40],
+    fontStyle: "bold",
+    fontSize: 8.5,
+    lineColor: [220,224,235],
+    lineWidth: { top: 0.3, bottom: 0.3 },
+  },
+  bodyStyles: {
+    fontSize: 9,
+    textColor: [120,120,130],
+    lineColor: [220,224,235],
+    lineWidth: { bottom: 0.2 },
+    cellPadding: { top: 4, bottom: 4, left: 2, right: 2 },
+  },
+  alternateRowStyles: { fillColor: false },
+  tableLineWidth: 0,
+};
+
 export async function generateAutonomoPDF(data) {
   const { numero, fecha, emisorNombre, emisorDni, emisorDireccion, emisorCiudad,
     emisorEmail, emisorTel, receptorNombre, receptorNif, receptorDireccion,
@@ -191,10 +202,7 @@ export async function generateAutonomoPDF(data) {
       2: { halign: "right", cellWidth: 32 },
       3: { halign: "right", cellWidth: 34 },
     },
-    headStyles: { fillColor: false, textColor: [40,40,40], fontStyle: "bold", fontSize: 8.5, lineColor: [220,224,235], lineWidth: { bottom: 0.3 } },
-    bodyStyles: { fontSize: 9, textColor: [120,120,130], lineColor: [220,224,235], lineWidth: { bottom: 0.2 }, cellPadding: { top: 4, bottom: 4, left: 2, right: 2 } },
-    alternateRowStyles: { fillColor: false },
-    tableLineWidth: 0,
+    ...TABLE_STYLES,
   });
 
   drawTotals(doc, [
@@ -243,10 +251,7 @@ export async function generateSociedadPDF(data) {
       3: { halign: "right", textColor: [170,170,178], cellWidth: 28 },
       4: { halign: "right", cellWidth: 32 },
     },
-    headStyles: { fillColor: false, textColor: [40,40,40], fontStyle: "bold", fontSize: 8.5, lineColor: [220,224,235], lineWidth: { bottom: 0.3 } },
-    bodyStyles: { fontSize: 9, textColor: [120,120,130], lineColor: [220,224,235], lineWidth: { bottom: 0.2 }, cellPadding: { top: 4, bottom: 4, left: 2, right: 2 } },
-    alternateRowStyles: { fillColor: false },
-    tableLineWidth: 0,
+    ...TABLE_STYLES,
   });
 
   drawTotals(doc, [
