@@ -1,33 +1,7 @@
-﻿import { createContext, useContext, useState } from "react";
+﻿import { createContext, useContext, useState, useEffect } from "react";
 
-const AUTONOMOS_DEFAULT = [
-  {
-    id: 1, nombre: "Juan Cotrina Gutierrez", dni: "76074376J",
-    direccion: "Juan de Austria, 31, 4B", ciudad: "28010, Madrid",
-    email: "jucotrina@gmail.com", tel: "+34 630 156 786",
-    iban: "ES87 0182 9465 6002 0597 6548",
-  },
-  {
-    id: 2, nombre: "Denis Gonzalez Blazquez", dni: "47376677N",
-    direccion: "Mira el Rio Baja 16, 3A", ciudad: "28005, Madrid",
-    email: "dennisgb@icloud.com", tel: "+34 687 388 122",
-    iban: "ES41 0073 0100 5106 1656 8049",
-  },
-  {
-    id: 3, nombre: "Ramon Ruiz Herrero", dni: "05940273V",
-    direccion: "Avenida de Mallorca 4, Bajo C.", ciudad: "28290, Las Rozas de Madrid",
-    email: "ruizherrero1@gmail.com", tel: "+34 649 925 463",
-    iban: "ES30 0182 2011 4102 0159 0348",
-  },
-];
-
-const CLIENTES_DEFAULT = [
-  {
-    id: 1, nombre: "Kynaxis Technology Solutions S.L.", nif: "B09633710",
-    direccion: "Paseo de la Castellana, N90, planta 1.", ciudad: "28046, Madrid",
-    email: "", tel: "",
-  },
-];
+const AUTONOMOS_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQWeDOnX_4tkvEI6zin85Kv7b-xW2ZRh6ef1ld-3qVdC_guOrVs_JBPSm7uf4Y-Jb15WPPmPWoSK2Ff/pub?gid=0&single=true&output=csv";
+const CLIENTES_URL  = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQWeDOnX_4tkvEI6zin85Kv7b-xW2ZRh6ef1ld-3qVdC_guOrVs_JBPSm7uf4Y-Jb15WPPmPWoSK2Ff/pub?gid=1848159679&single=true&output=csv";
 
 const RECEPTOR_DEFAULT = {
   nombre: "Stratos Dynamis Consulting S.L.", nif: "B21951033",
@@ -36,24 +10,47 @@ const RECEPTOR_DEFAULT = {
   iban: "ES44 0182 6135 8502 0166 9830",
 };
 
+function parseCSV(text) {
+  const lines = text.trim().split("\n");
+  const headers = lines[0].split(",").map(h => h.trim().replace(/^"|"$/g, ""));
+  return lines.slice(1).map((line, i) => {
+    const values = line.split(",").map(v => v.trim().replace(/^"|"$/g, ""));
+    const obj = { id: i + 1 };
+    headers.forEach((h, j) => { obj[h] = values[j] || ""; });
+    return obj;
+  });
+}
+
 const PersonasCtx = createContext(null);
 
 export function PersonasProvider({ children }) {
-  const [autonomos, setAutonomos] = useState(AUTONOMOS_DEFAULT);
-  const [clientes, setClientes] = useState(CLIENTES_DEFAULT);
+  const [autonomos, setAutonomos] = useState([]);
+  const [clientes, setClientes] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const addAutonomo = (a) => setAutonomos(prev => [...prev, { ...a, id: Date.now() }]);
-  const updateAutonomo = (id, a) => setAutonomos(prev => prev.map(x => x.id === id ? { ...x, ...a } : x));
-  const removeAutonomo = (id) => setAutonomos(prev => prev.filter(x => x.id !== id));
-
-  const addCliente = (c) => setClientes(prev => [...prev, { ...c, id: Date.now() }]);
-  const updateCliente = (id, c) => setClientes(prev => prev.map(x => x.id === id ? { ...x, ...c } : x));
-  const removeCliente = (id) => setClientes(prev => prev.filter(x => x.id !== id));
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const [resA, resC] = await Promise.all([
+          fetch(AUTONOMOS_URL),
+          fetch(CLIENTES_URL),
+        ]);
+        const [textA, textC] = await Promise.all([resA.text(), resC.text()]);
+        setAutonomos(parseCSV(textA));
+        setClientes(parseCSV(textC));
+      } catch (e) {
+        setError("No se pudieron cargar los datos del sheet.");
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
+  }, []);
 
   return (
     <PersonasCtx.Provider value={{
-      autonomos, addAutonomo, updateAutonomo, removeAutonomo,
-      clientes, addCliente, updateCliente, removeCliente,
+      autonomos, clientes, loading, error,
       receptor: RECEPTOR_DEFAULT,
     }}>
       {children}
