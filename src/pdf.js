@@ -20,6 +20,9 @@ const GRAY2 = [120, 120, 130];
 const GRAY3 = [170, 170, 178];
 const BORD  = [220, 224, 235];
 
+function setColor(doc, c) { doc.setTextColor(c[0], c[1], c[2]); }
+function setDraw(doc, c) { doc.setDrawColor(c[0], c[1], c[2]); }
+
 async function loadLogo() {
   return new Promise((resolve) => {
     const img = new Image();
@@ -43,13 +46,13 @@ function drawHeader(doc, { numero, fecha, logoData }) {
   }
   doc.setFont("helvetica", "bold");
   doc.setFontSize(12);
-  doc.setTextColor(...NAVY);
+  setColor(doc, NAVY);
   doc.text("FACTURA N\u00BA: " + numero, 196, 14, { align: "right" });
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
-  doc.setTextColor(...GRAY2);
+  setColor(doc, GRAY2);
   doc.text("Fecha: " + fmtDate(fecha), 196, 20, { align: "right" });
-  doc.setDrawColor(...BORD);
+  setDraw(doc, BORD);
   doc.setLineWidth(0.3);
   doc.line(14, 32, 196, 32);
 }
@@ -58,19 +61,19 @@ function drawParties(doc, { left, right, leftTitle, rightTitle }) {
   let y = 40;
   doc.setFont("helvetica", "bold");
   doc.setFontSize(9);
-  doc.setTextColor(...GRAY1);
+  setColor(doc, GRAY1);
   doc.text(leftTitle + ":", 14, y);
   doc.text(rightTitle + ":", 108, y);
   y += 5;
   doc.setFont("helvetica", "bold");
   doc.setFontSize(9.5);
-  doc.setTextColor(...BLUE);
+  setColor(doc, BLUE);
   doc.text(left[0], 14, y);
   doc.text(right[0], 108, y);
   y += 5;
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8.5);
-  doc.setTextColor(...GRAY1);
+  setColor(doc, GRAY1);
   left.slice(1).forEach((line, i) => { if (line) doc.text(line, 14, y + i * 4.5); });
   right.slice(1).forEach((line, i) => { if (line) doc.text(line, 108, y + i * 4.5); });
   const maxLines = Math.max(left.filter(Boolean).length, right.filter(Boolean).length);
@@ -85,41 +88,39 @@ function drawTotals(doc, rows, grand) {
 
   let y = tableBottom + 14;
 
-  // Titulo "Total" centrado sobre el bloque
   doc.setFont("helvetica", "normal");
   doc.setFontSize(11);
-  doc.setTextColor(...GRAY2);
+  setColor(doc, GRAY2);
   doc.text("Total", boxX + boxW / 2, y, { align: "center" });
   y += 4;
 
-  doc.setDrawColor(...BORD);
+  setDraw(doc, BORD);
   doc.setLineWidth(0.3);
   doc.line(boxX, y, W, y);
   y += 6;
 
-  rows.forEach(({ label, pct, amount, bold }) => {
-    doc.setFont("helvetica", bold ? "bold" : "normal");
+  rows.forEach(({ label, pct, amount }) => {
+    doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
-    doc.setTextColor(...GRAY2);
+    setColor(doc, GRAY2);
     doc.text(label, boxX + 2, y);
     if (pct) {
-      doc.text(pct, boxX + 28, y);
+      doc.text(pct, boxX + 30, y);
     }
-    doc.setTextColor(bold ? GRAY1 : GRAY2);
+    setColor(doc, GRAY2);
     doc.text(amount, W - 2, y, { align: "right" });
-    doc.setDrawColor(...BORD);
+    setDraw(doc, BORD);
     doc.setLineWidth(0.2);
     doc.line(boxX, y + 3, W, y + 3);
     y += 9;
   });
 
-  // Fila total en negrita
   doc.setFont("helvetica", "bold");
   doc.setFontSize(10);
-  doc.setTextColor(...GRAY1);
+  setColor(doc, GRAY1);
   doc.text("Total", boxX + 2, y);
   doc.text(grand, W - 2, y, { align: "right" });
-  doc.setDrawColor(...BORD);
+  setDraw(doc, BORD);
   doc.setLineWidth(0.4);
   doc.line(boxX, y + 3, W, y + 3);
 
@@ -130,12 +131,11 @@ function drawIban(doc, iban) {
   const y = 248;
   doc.setFont("helvetica", "normal");
   doc.setFontSize(15);
-  doc.setTextColor(...GRAY2);
+  setColor(doc, GRAY2);
   doc.text("N\u00BA de cuenta: " + iban, 105, y, { align: "center" });
-
   const payText = "El pago se realizara en un plazo de 15 dias naturales desde la emision de esta factura, se realizara mediante transferencia bancaria.";
   doc.setFontSize(7.5);
-  doc.setTextColor(...GRAY3);
+  setColor(doc, GRAY3);
   const lines = doc.splitTextToSize(payText, 72);
   lines.forEach((line, i) => {
     doc.text(line, 196, y + 10 + i * 4, { align: "right" });
@@ -154,7 +154,6 @@ export async function generateAutonomoPDF(data) {
 
   const doc = new jsPDF({ unit: "mm", format: "a4" });
 
-  // Sin logo en facturas de autonomo
   drawHeader(doc, { numero, fecha, logoData: null });
 
   const tableY = drawParties(doc, {
@@ -178,8 +177,8 @@ export async function generateAutonomoPDF(data) {
       2: { halign: "right", cellWidth: 32 },
       3: { halign: "right", cellWidth: 34 },
     },
-    headStyles: { fillColor: false, textColor: GRAY1, fontStyle: "bold", fontSize: 8.5, lineColor: BORD, lineWidth: { bottom: 0.3 } },
-    bodyStyles: { fontSize: 9, textColor: GRAY2, lineColor: BORD, lineWidth: { bottom: 0.2 }, cellPadding: { top: 4, bottom: 4, left: 2, right: 2 } },
+    headStyles: { fillColor: false, textColor: [40,40,40], fontStyle: "bold", fontSize: 8.5, lineColor: [220,224,235], lineWidth: { bottom: 0.3 } },
+    bodyStyles: { fontSize: 9, textColor: [120,120,130], lineColor: [220,224,235], lineWidth: { bottom: 0.2 }, cellPadding: { top: 4, bottom: 4, left: 2, right: 2 } },
     alternateRowStyles: { fillColor: false },
     tableLineWidth: 0,
   });
@@ -228,11 +227,11 @@ export async function generateSociedadPDF(data) {
       0: { cellWidth: "auto" },
       1: { halign: "right", cellWidth: 22 },
       2: { halign: "right", cellWidth: 26 },
-      3: { halign: "right", textColor: GRAY3, cellWidth: 28 },
+      3: { halign: "right", textColor: [170,170,178], cellWidth: 28 },
       4: { halign: "right", cellWidth: 32 },
     },
-    headStyles: { fillColor: false, textColor: GRAY1, fontStyle: "bold", fontSize: 8.5, lineColor: BORD, lineWidth: { bottom: 0.3 } },
-    bodyStyles: { fontSize: 9, textColor: GRAY2, lineColor: BORD, lineWidth: { bottom: 0.2 }, cellPadding: { top: 4, bottom: 4, left: 2, right: 2 } },
+    headStyles: { fillColor: false, textColor: [40,40,40], fontStyle: "bold", fontSize: 8.5, lineColor: [220,224,235], lineWidth: { bottom: 0.3 } },
+    bodyStyles: { fontSize: 9, textColor: [120,120,130], lineColor: [220,224,235], lineWidth: { bottom: 0.2 }, cellPadding: { top: 4, bottom: 4, left: 2, right: 2 } },
     alternateRowStyles: { fillColor: false },
     tableLineWidth: 0,
   });
