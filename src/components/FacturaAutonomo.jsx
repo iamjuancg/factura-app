@@ -46,6 +46,11 @@ export default function FacturaAutonomo() {
 
   const handleGenerate = () => {
     if (!emisor) return;
+    if (!numero.trim()) return alert("Introduce un numero de factura.");
+    if (!fecha) return alert("Selecciona una fecha.");
+    if (lineas.length === 0) return alert("Añade al menos una linea.");
+    const invalid = lineas.some(l => !l.descripcion.trim() || Number(l.cantidad) <= 0 || Number(l.precio) < 0);
+    if (invalid) return alert("Revisa las lineas: descripcion obligatoria, cantidad > 0 y precio >= 0.");
     generateAutonomoPDF({
       numero, fecha,
       emisorNombre: emisor.nombre, emisorDni: emisor.dni,
@@ -136,8 +141,8 @@ export default function FacturaAutonomo() {
       <div style={S.card}>
         <div style={S.sectionTitle}>Impuestos y totales</div>
         <div style={{ ...S.grid2, marginBottom: 16 }}>
-          <Field label="IVA (%)"><input type="number" value={ivaPct} min="0" max="100" onChange={e => setIvaPct(e.target.value)} /></Field>
-          <Field label="IRPF (%)"><input type="number" value={irpfPct} min="0" max="100" onChange={e => setIrpfPct(e.target.value)} /></Field>
+          <Field label="IVA (%)"><input type="number" value={ivaPct} min="0" max="100" onChange={e => setIvaPct(Number(e.target.value))} /></Field>
+          <Field label="IRPF (%)"><input type="number" value={irpfPct} min="0" max="100" onChange={e => setIrpfPct(Number(e.target.value))} /></Field>
         </div>
         <div style={S.totalsBox}>
           <div style={S.totalRow}><span>Base Imponible</span><span style={S.totalAmt}>{S.fmt(base)}</span></div>

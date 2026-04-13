@@ -4,7 +4,7 @@ import FacturaSociedad from "./components/FacturaSociedad";
 import GestionPersonas from "./components/GestionPersonas";
 import { PersonasProvider } from "./context/PersonasContext";
 
-const PASSWORD = "stratos2026";
+const PASSWORD = process.env.REACT_APP_PASSWORD || "";
 
 function IconDoc() {
   return (
