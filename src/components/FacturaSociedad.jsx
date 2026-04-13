@@ -65,14 +65,14 @@ export default function FacturaSociedad() {
 
   if (loading) return (
     <div style={{ textAlign: "center", padding: 60, color: "var(--text-3)", fontSize: 14 }}>
-      <div style={{ marginBottom: 12, fontSize: 24 }}>â³</div>
+      <div style={{ marginBottom: 12, fontSize: 24 }}>{"⏳"}</div>
       Cargando datos...
     </div>
   );
 
   if (error) return (
     <div style={{ textAlign: "center", padding: 60, color: "var(--danger)", fontSize: 14 }}>
-      <div style={{ marginBottom: 12, fontSize: 24 }}>âš ï¸</div>
+      <div style={{ marginBottom: 12, fontSize: 24 }}>{"⚠️"}</div>
       {error}
     </div>
   );
