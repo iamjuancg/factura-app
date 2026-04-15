@@ -228,6 +228,7 @@ export async function generateAutonomoPDF(data) {
   ], fmtMoney(total), "Total");
 
   drawFooter(doc, iban);
+  doc.setProperties({ keywords: "%%FACTURA%%" + JSON.stringify({ _facturaType: "autonomo", ...data }) + "%%END%%" });
   doc.save(`Factura_${numero}.pdf`);
 }
 
@@ -279,5 +280,6 @@ export async function generateSociedadPDF(data) {
   ], fmtMoney(total), "Importe Final");
 
   drawFooter(doc, iban);
+  doc.setProperties({ keywords: "%%FACTURA%%" + JSON.stringify({ _facturaType: "sociedad", ...data }) + "%%END%%" });
   doc.save(`Factura_${numero}.pdf`);
 }

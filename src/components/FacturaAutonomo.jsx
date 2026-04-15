@@ -1,8 +1,10 @@
 ﻿import { useState, useEffect } from "react";
 import Field from "./Field";
+import ImportPDFButton from "./ImportPDFButton";
 import * as S from "./styles";
 import { generateAutonomoPDF } from "../pdf";
 import { usePersonas } from "../context/PersonasContext";
+import { safe } from "../pdfImport";
 
 const today = new Date().toISOString().split("T")[0];
 const LINE_GRID = "2fr 80px 100px 100px 36px";
@@ -44,6 +46,27 @@ export default function FacturaAutonomo() {
   const irpfAmt = base * irpfPct / 100;
   const total   = base + ivaAmt - irpfAmt;
 
+  const handleImport = ({ data }) => {
+    if (data.numero) setNumero(data.numero);
+    if (data.fecha) setFecha(data.fecha);
+    if (data.ivaPct != null) setIvaPct(Number(data.ivaPct));
+    if (data.irpfPct != null) setIrpfPct(Number(data.irpfPct));
+    if (data.lineas && data.lineas.length > 0) {
+      setLineas(data.lineas.map((l, i) => ({
+        id: Date.now() + i,
+        descripcion: l.descripcion || "",
+        cantidad: Number(l.cantidad) || 0,
+        precio: Number(l.precio) || 0,
+      })));
+    }
+    // Try to match emisor by name
+    if (data.emisorNombre && autonomos.length > 0) {
+      const nameClean = safe(data.emisorNombre).toLowerCase();
+      const match = autonomos.find(a => safe(a.nombre).toLowerCase() === nameClean);
+      if (match) handleSelect(match.id);
+    }
+  };
+
   const handleGenerate = () => {
     if (!emisor) return;
     if (!numero.trim()) return alert("Introduce un numero de factura.");
@@ -81,7 +104,10 @@ export default function FacturaAutonomo() {
   return (
     <div>
       <div style={S.card}>
-        <div style={S.sectionTitle}>Datos de la factura</div>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", ...S.sectionTitle, marginBottom: 14 }}>
+          <span>Datos de la factura</span>
+          <ImportPDFButton onImport={handleImport} expectedType="autonomo" />
+        </div>
         <div style={S.grid2}>
           <Field label="Num. Factura"><input value={numero} onChange={e => setNumero(e.target.value)} /></Field>
           <Field label="Fecha"><input type="date" value={fecha} onChange={e => setFecha(e.target.value)} /></Field>

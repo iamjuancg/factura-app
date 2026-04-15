@@ -1,8 +1,10 @@
 ﻿import { useState, useEffect } from "react";
 import Field from "./Field";
+import ImportPDFButton from "./ImportPDFButton";
 import * as S from "./styles";
 import { generateSociedadPDF } from "../pdf";
 import { usePersonas } from "../context/PersonasContext";
+import { safe } from "../pdfImport";
 
 const today = new Date().toISOString().split("T")[0];
 const LINE_GRID = "2fr 80px 100px 100px 100px 36px";
@@ -45,6 +47,26 @@ export default function FacturaSociedad() {
   const ivaTotal = base * ivaPct / 100;
   const total    = base + ivaTotal;
 
+  const handleImport = ({ data }) => {
+    if (data.numero) setNumero(data.numero);
+    if (data.fecha) setFecha(data.fecha);
+    if (data.ivaPct != null) setIvaPct(Number(data.ivaPct));
+    if (data.lineas && data.lineas.length > 0) {
+      setLineas(data.lineas.map((l, i) => ({
+        id: Date.now() + i,
+        descripcion: l.descripcion || "",
+        cantidad: Number(l.cantidad) || 0,
+        tarifa: Number(l.tarifa) || 0,
+      })));
+    }
+    // Try to match receptor (cliente) by name
+    if (data.receptorNombre && clientes.length > 0) {
+      const nameClean = safe(data.receptorNombre).toLowerCase();
+      const match = clientes.find(c => safe(c.nombre).toLowerCase() === nameClean);
+      if (match) handleSelect(match.id);
+    }
+  };
+
   const handleGenerate = () => {
     if (!cliente) return;
     if (!numero.trim()) return alert("Introduce un numero de factura.");
@@ -80,7 +102,10 @@ export default function FacturaSociedad() {
   return (
     <div>
       <div style={S.card}>
-        <div style={S.sectionTitle}>Datos de la factura</div>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", ...S.sectionTitle, marginBottom: 14 }}>
+          <span>Datos de la factura</span>
+          <ImportPDFButton onImport={handleImport} expectedType="sociedad" />
+        </div>
         <div style={S.grid2}>
           <Field label="Num. Factura"><input value={numero} onChange={e => setNumero(e.target.value)} /></Field>
           <Field label="Fecha"><input type="date" value={fecha} onChange={e => setFecha(e.target.value)} /></Field>
